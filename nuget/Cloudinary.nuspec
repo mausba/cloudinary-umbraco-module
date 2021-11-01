@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package >
+  <metadata>
+    <id>MAUS.Cloudinary</id>
+    <version>1.0.4</version>
+    <title>MAUS.Cloudinary</title>
+    <authors>MAUS</authors>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">MIT</license>
+    <projectUrl>https://www.maus.ba/</projectUrl>
+    <description>MAUS.Cloudinary</description>
+    <copyright>Copyright © MAUS</copyright>
+	<dependencies>
+      <group targetFramework=".NETFramework4.6">
+		<dependency id="Microsoft.AspNet.Mvc" version="5.0.0" />
+		<dependency id="Microsoft.AspNet.Razor" version="3.0.0" />
+		<dependency id="Microsoft.AspNet.WebPages" version="3.0.1" />
+		<dependency id="Microsoft.Web.Infrastructure" version="1.0.0.0" />
+	  </group>
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="..\Cloudinary\Cloudinary\bin\Release\MAUS.Cloudinary.dll" target="lib\net46" />
+  </files>
+</package>

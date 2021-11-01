@@ -1,26 +1,27 @@
 ﻿using System.Configuration;
+using System.Text.RegularExpressions;
 
 namespace Cloudinary
 {
     public class HtmlTranformer
     {
         private readonly string cloudinaryUrl;
-        private readonly string cloudinaryCropFormat;
+        private readonly string cloudinaryRegex;
 
-        public HtmlTranformer() : this(ConfigurationManager.AppSettings["CloudinaryUrl"], ConfigurationManager.AppSettings["CloudinaryCropFormat"]) { }
+        public HtmlTranformer() : this(
+            ConfigurationManager.AppSettings["CloudinaryUrl"],
+            ConfigurationManager.AppSettings["CloudinaryRegex"])
+        { }
 
-        public HtmlTranformer(string cloudinaryUrl, string cloudinaryCropFormat)
+        public HtmlTranformer(string cloudinaryUrl, string cloudinaryRegex)
         {
             this.cloudinaryUrl = cloudinaryUrl;
-            this.cloudinaryCropFormat = cloudinaryCropFormat;
+            this.cloudinaryRegex = cloudinaryRegex;
         }
 
         public string TransformMediaLinks(string html)
         {
-            html = html.Replace("/media/", cloudinaryUrl);
-            html = html.Replace("/media/{{crop-", "/" + cloudinaryCropFormat + ",w_");
-            html = html.Replace("{{m}}", "media");
-            return html;
+            return Regex.Replace(html, cloudinaryRegex, cloudinaryUrl, RegexOptions.Multiline | RegexOptions.IgnoreCase);
         }
     }
 }

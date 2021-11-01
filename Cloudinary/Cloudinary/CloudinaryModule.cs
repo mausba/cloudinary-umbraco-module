@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Configuration;
 using System.Web;
+using System.Web.Mvc;
 
 namespace Cloudinary
 {
@@ -14,15 +16,22 @@ namespace Cloudinary
 
         private void HandleRequest(object sender, EventArgs e)
         {
+            var cloudinaryActive = ConfigurationManager.AppSettings["CloudinaryActive"] == "true";
+            if (!cloudinaryActive) return;
+
             var app = (HttpApplication)sender;
             var http = new HttpContextWrapper(app.Context);
 
-            var filter = new ResponseFilterStream(http.Response.Filter);
-            filter.TransformString += filter_TransformString;
+            var isPage = app.Context.CurrentHandler is MvcHandler;
+            var isUmbracoPath = app.Request.FilePath.StartsWith("/umbraco/");
+            if (!isPage || isUmbracoPath) return;
+
+            var filter = new ResponseFilterStream(http.Response.Filter, http);
+            filter.TransformString += FilterTransformString;
             http.Response.Filter = filter;
         }
 
-        private string filter_TransformString(string arg)
+        private string FilterTransformString(string arg)
         {
             return htmlTranformer.TransformMediaLinks(arg);
         }

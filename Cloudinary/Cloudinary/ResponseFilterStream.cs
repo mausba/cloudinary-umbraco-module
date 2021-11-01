@@ -3,7 +3,6 @@ using System.IO;
 using System.Text;
 using System.Web;
 
-
 namespace Cloudinary
 {
     /// <summary>
@@ -14,18 +13,15 @@ namespace Cloudinary
     /// Use with care for large output as this implementation copies
     /// the output into a memory stream and so increases memory usage.
     /// </remarks>
-    /// </summary>    
+    /// </summary>
     public class ResponseFilterStream : Stream
     {
         /// <summary>
         /// The original stream
         /// </summary>
-        Stream _stream;
+        readonly Stream _stream;
 
-        /// <summary>
-        /// Current position in the original stream
-        /// </summary>
-        long _position;
+        private readonly HttpContextBase _http;
 
         /// <summary>
         /// Stream that original content is read into
@@ -39,16 +35,11 @@ namespace Cloudinary
         /// </summary>
         int _cachePointer = 0;
 
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="responseStream"></param>
-        public ResponseFilterStream(Stream responseStream)
+        public ResponseFilterStream(Stream responseStream, HttpContextBase http)
         {
             _stream = responseStream;
+            _http = http;
         }
-
 
         /// <summary>
         /// Determines whether the stream is captured
@@ -57,7 +48,6 @@ namespace Cloudinary
         {
             get
             {
-
                 if (CaptureStream != null || CaptureString != null ||
                     TransformStream != null || TransformString != null)
                     return true;
@@ -81,7 +71,6 @@ namespace Cloudinary
             }
         }
 
-
         /// <summary>
         /// Event that captures Response output and makes it available
         /// as a MemoryStream instance. Output is captured but won't 
@@ -95,8 +84,6 @@ namespace Cloudinary
         /// </summary>
         public event Action<string> CaptureString;
 
-
-
         /// <summary>
         /// Event that allows you transform the stream as each chunk of
         /// the output is written in the Write() operation of the stream.
@@ -108,7 +95,6 @@ namespace Cloudinary
         /// operation.
         /// </summary>
         public event Func<byte[], byte[]> TransformWrite;
-
 
         /// <summary>
         /// Event that allows you to transform the response stream as
@@ -136,19 +122,17 @@ namespace Cloudinary
         /// </summary>
         public event Func<string, string> TransformString;
 
-
         protected virtual void OnCaptureStream(MemoryStream ms)
         {
             if (CaptureStream != null)
                 CaptureStream(ms);
         }
 
-
         private void OnCaptureStringInternal(MemoryStream ms)
         {
             if (CaptureString != null)
             {
-                string content = HttpContext.Current.Response.ContentEncoding.GetString(ms.ToArray());
+                string content = _http.Response.ContentEncoding.GetString(ms.ToArray());
                 OnCaptureString(content);
             }
         }
@@ -168,7 +152,7 @@ namespace Cloudinary
 
         private byte[] OnTransformWriteStringInternal(byte[] buffer)
         {
-            Encoding encoding = HttpContext.Current.Response.ContentEncoding;
+            Encoding encoding = _http.Response.ContentEncoding;
             string output = OnTransformWriteString(encoding.GetString(buffer));
             return encoding.GetBytes(output);
         }
@@ -180,34 +164,12 @@ namespace Cloudinary
             return value;
         }
 
-
         protected virtual MemoryStream OnTransformCompleteStream(MemoryStream ms)
         {
             if (TransformStream != null)
                 return TransformStream(ms);
 
             return ms;
-        }
-
-
-
-
-        /// <summary>
-        /// Allows transforming of strings
-        /// 
-        /// Note this handler is internal and not meant to be overridden
-        /// as the TransformString Event has to be hooked up in order
-        /// for this handler to even fire to avoid the overhead of string
-        /// conversion on every pass through.
-        /// </summary>
-        /// <param name="responseText"></param>
-        /// <returns></returns>
-        private string OnTransformCompleteString(string responseText)
-        {
-            if (TransformString != null)
-                TransformString(responseText);
-
-            return responseText;
         }
 
         /// <summary>
@@ -218,92 +180,56 @@ namespace Cloudinary
         /// <returns></returns>
         internal MemoryStream OnTransformCompleteStringInternal(MemoryStream ms)
         {
-            if (TransformString == null)
-                return ms;
+            if (TransformString == null) return ms;
 
-            //string content = ms.GetAsString();
-            string content = HttpContext.Current.Response.ContentEncoding.GetString(ms.ToArray());
+            string content = _http.Response.ContentEncoding.GetString(ms.ToArray());
 
             content = TransformString(content);
-            byte[] buffer = HttpContext.Current.Response.ContentEncoding.GetBytes(content);
+            byte[] buffer = _http.Response.ContentEncoding.GetBytes(content);
             ms = new MemoryStream();
             ms.Write(buffer, 0, buffer.Length);
-            //ms.WriteString(content);
 
             return ms;
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        public override bool CanRead
-        {
-            get { return true; }
-        }
+        public override bool CanRead => true;
 
-        public override bool CanSeek
-        {
-            get { return true; }
-        }
-        /// <summary>
-        /// 
-        /// </summary>
-        public override bool CanWrite
-        {
-            get { return true; }
-        }
+        public override bool CanSeek => true;
+
+        public override bool CanWrite => true;
+
+        public override long Length => 0;
 
         /// <summary>
-        /// 
+        /// Current position in the original stream
         /// </summary>
-        public override long Length
+        public override long Position { get; set; }
+
+        public override long Seek(long offset, System.IO.SeekOrigin origin)
         {
-            get { return 0; }
+            return _stream.Seek(offset, origin);
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        public override long Position
+        public override void SetLength(long value)
         {
-            get { return _position; }
-            set { _position = value; }
+            _stream.SetLength(value);
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="offset"></param>
-        /// <param name="direction"></param>
-        /// <returns></returns>
-        public override long Seek(long offset, System.IO.SeekOrigin direction)
-        {
-            return _stream.Seek(offset, direction);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="length"></param>
-        public override void SetLength(long length)
-        {
-            _stream.SetLength(length);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
         public override void Close()
         {
             _stream.Close();
+            _cacheStream.Close();
         }
 
-        /// <summary>
-        /// Override flush by writing out the cached stream data
-        /// </summary>
+        protected override void Dispose(bool disposing)
+        {
+            base.Dispose(disposing);
+            _stream.Dispose();
+            _cacheStream.Dispose();
+        }
+
         public override void Flush()
         {
-
             if (IsCaptured && _cacheStream.Length > 0)
             {
                 // Check for transform implementations
@@ -325,18 +251,10 @@ namespace Cloudinary
             _stream.Flush();
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="buffer"></param>
-        /// <param name="offset"></param>
-        /// <param name="count"></param>
-        /// <returns></returns>
         public override int Read(byte[] buffer, int offset, int count)
         {
             return _stream.Read(buffer, offset, count);
         }
-
 
         /// <summary>
         /// Overriden to capture output written by ASP.NET and captured
@@ -362,10 +280,7 @@ namespace Cloudinary
                 buffer = OnTransformWriteStringInternal(buffer);
 
             if (!IsOutputDelayed)
-                _stream.Write(buffer, offset, buffer.Length);
-
+                _stream.Write(buffer, offset, count);
         }
-
     }
-
 }
