@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>MAUS.Cloudinary</id>
-    <version>1.0.7</version>
+    <version>1.2.0</version>
     <title>MAUS.Cloudinary</title>
 	<description>Cloudinary integration for Umbraco</description>
     <authors>MAUS</authors>
@@ -11,6 +11,7 @@
 	<copyright>Copyright © MAUS</copyright>
     <projectUrl>https://www.maus.ba/</projectUrl>
 	<repository type="git" url="https://github.com/mausba/cloudinary-umbraco-module" branch="master" />
+	<readme>README.md</readme>
 	<dependencies>
       <group targetFramework=".NETFramework4.0">
 		<dependency id="Microsoft.AspNet.Mvc" version="4.0.20505.0" />
@@ -22,5 +23,7 @@
   </metadata>
   <files>
     <file src="..\Cloudinary\Cloudinary\bin\Release\MAUS.Cloudinary.dll" target="lib\net40" />
+	<file src="..\Cloudinary\Cloudinary\content\Web.config.transform" target="content" />
+	<file src="..\README.md" />
   </files>
 </package>
