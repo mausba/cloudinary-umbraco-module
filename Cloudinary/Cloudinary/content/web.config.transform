@@ -1,0 +1,18 @@
+﻿<configuration>
+  <appSettings>
+    <add key="CloudinaryActive" value="true" />
+    <add key="CloudinaryUrl" value="https://res.cloudinary.com/{youraccount}/image/upload/media/" />
+    <add key="CloudinaryRegex" value="\/media\/(,w_\d+)?(,h_\d+)?\/?(.[^ ]*\.(?:jpg|png|jpeg|gif))" />
+  </appSettings>
+  <system.web>
+    <httpModules>
+      <add name="CloudinaryModule" type="Cloudinary.CloudinaryModule, MAUS.Cloudinary" />
+    </httpModules>
+  </system.web>
+  <system.webServer>
+    <modules>
+      <remove name="CloudinaryModule" />
+      <add name="CloudinaryModule" type="Cloudinary.CloudinaryModule, MAUS.Cloudinary" />
+    </modules>
+  </system.webServer>
+</configuration>
