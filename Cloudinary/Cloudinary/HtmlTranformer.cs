@@ -21,7 +21,11 @@ namespace Cloudinary
 
         public string TransformMediaLinks(string html)
         {
-            return Regex.Replace(html, cloudinaryRegex, cloudinaryUrl, RegexOptions.Multiline | RegexOptions.IgnoreCase);
+            var url = Regex.Match(html, "\.(?:avi|mp4|mpeg|ogv|webm|wmv)").Success
+                ? cloudinaryUrl.Replace("image", "video")
+                : cloudinaryUrl;
+
+            return Regex.Replace(html, cloudinaryRegex, url, RegexOptions.Multiline | RegexOptions.IgnoreCase);
         }
     }
 }

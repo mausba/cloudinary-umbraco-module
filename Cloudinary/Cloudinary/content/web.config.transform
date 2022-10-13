@@ -2,7 +2,7 @@
   <appSettings>
     <add key="CloudinaryActive" value="true" />
     <add key="CloudinaryUrl" value="https://res.cloudinary.com/{youraccount}/image/upload/media/" />
-    <add key="CloudinaryRegex" value="\/media\/(,w_\d+)?(,h_\d+)?\/?(.[^ ]*\.(?:jpg|png|jpeg|gif))" />
+    <add key="CloudinaryRegex" value="\/media\/(,w_\d+)?(,h_\d+)?\/?(.[^ ]*\.(?:jpg|png|jpeg|gif|avi|mp4|mpeg|ogv|webm|wmv))" />
   </appSettings>
   <system.web>
     <httpModules>
