@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>MAUS.Cloudinary</id>
-    <version>1.2.1</version>
+    <version>1.2.2</version>
     <title>MAUS.Cloudinary</title>
 	<description>Cloudinary integration for Umbraco</description>
     <authors>MAUS</authors>

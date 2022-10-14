@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Configuration;
+using System.Text.RegularExpressions;
 using System.Web;
 using System.Web.Mvc;
 
@@ -7,7 +8,14 @@ namespace Cloudinary
 {
     public class CloudinaryModule : IHttpModule
     {
-        private readonly HtmlTranformer htmlTranformer = new HtmlTranformer();
+        private readonly string ImageFormats = @"\/media\/(,w_\d+)?(,h_\d+)?(,x_\d+)?(,y_\d+)?(,c_[a-zA-Z]+)?\/?(.[^ ]*\.(?:avif|gif|jpeg|jpg|png|svg|webp))";
+        private readonly string VideoFormats = @"\/media\/(,w_\d+)?(,h_\d+)?(,x_\d+)?(,y_\d+)?(,c_[a-zA-Z]+)?\/?(.[^ ]*\.(?:3gp|avi|mp4|mpeg|ogg|webm|wmv))";
+        private readonly string CloudinaryUrl;
+
+        public CloudinaryModule()
+        {
+            CloudinaryUrl = ConfigurationManager.AppSettings["CloudinaryUrl"];
+        }
 
         public void Init(HttpApplication context)
         {
@@ -16,8 +24,7 @@ namespace Cloudinary
 
         private void HandleRequest(object sender, EventArgs e)
         {
-            var cloudinaryActive = ConfigurationManager.AppSettings["CloudinaryActive"] == "true";
-            if (!cloudinaryActive) return;
+            if (string.IsNullOrEmpty(CloudinaryUrl) || CloudinaryUrl.Contains("{youraccount}")) return;
 
             var app = (HttpApplication)sender;
             var http = new HttpContextWrapper(app.Context);
@@ -27,15 +34,19 @@ namespace Cloudinary
             if (!isPage || isUmbracoPath) return;
 
             var filter = new ResponseFilterStream(http.Response.Filter, http);
-            filter.TransformString += FilterTransformString;
+            filter.TransformString += TransformString;
             http.Response.Filter = filter;
         }
 
-        private string FilterTransformString(string arg)
+        private string TransformString(string html)
         {
-            return htmlTranformer.TransformMediaLinks(arg);
+            var responseHtml = Regex.Replace(html, ImageFormats, CloudinaryUrl, RegexOptions.Multiline | RegexOptions.IgnoreCase);
+            return Regex.Replace(responseHtml, VideoFormats, CloudinaryUrl.Replace("image", "video"), RegexOptions.Multiline | RegexOptions.IgnoreCase);
         }
 
-        public void Dispose() { }
+        public void Dispose()
+        {
+            // Method intentionally left empty.
+        }
     }
 }
